@@ -260,7 +260,7 @@ private:
 		result.push_back(Point(50, 10, 10));
 		result.push_back(Point(25, 10, 50));
 		result.push_back(Point(25, 50, 25));
-		
+
 		for (int i = 0; i < 1; i++) {
 			result.push_back(
 				Point(

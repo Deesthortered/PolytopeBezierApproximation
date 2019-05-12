@@ -28,7 +28,8 @@ public:
 				}
 			}
 			if (found) {
-				horizon = GetHorizonPoints(faces, i, startPoints, ind);
+				vector<char> used = vector<char>(faces.size(), false);
+				horizon = GetHorizonPoints(faces, used, i, startPoints, ind);
 				i--;
 				break;
 			}
@@ -106,8 +107,7 @@ private:
 
 		return startPolytop;
 	}
-	static vector<Point> GetHorizonPoints(vector<TriangleFace> &faces, size_t face_ind, vector<Point> &startPoints, size_t point_ind) {
-		vector<char> used = vector<char>(faces.size(), false);
+	static vector<Point> GetHorizonPoints(vector<TriangleFace> &faces, vector<char> &used, size_t face_ind, vector<Point> &startPoints, size_t point_ind) {
 		used[face_ind] = true;
 
 		vector<RecursiveStackParams> start_params = vector<RecursiveStackParams>(3);
@@ -169,19 +169,14 @@ private:
 						horizon_points.push_back(current_param.start_point2);
 					else if (current_param.start_point2 == horizon_points.front() || current_param.start_point2 == horizon_points.back())
 						horizon_points.push_back(current_param.start_point1);
-					else {
-						RecursiveStackParams tmp = stack_params.top();
-						stack_params.pop();
-						stack_params.push(current_param);
-						stack_params.push(tmp);
-					}
+					else throw "Problem";
 				}
 			}
 			else {
 				used[current_param.face_index] = true;
+				RecursiveStackParams new_params1, new_params2;
 
 				for (size_t i = 0; i < 3; i++) {
-					RecursiveStackParams new_params;
 					size_t neighboring_face_ind = faces[current_param.face_index].neighbouringFaces[i];
 					if (used[neighboring_face_ind]) continue;
 
@@ -194,26 +189,28 @@ private:
 					}
 					if (check_existance != 2) throw "Problem1\0";
 
-					new_params.face_index = neighboring_face_ind;
 					if ((current_param.start_point1 == faces[neighboring_face_ind].vertices[0] ^ current_param.start_point1 == faces[neighboring_face_ind].vertices[1] ^ current_param.start_point1 == faces[neighboring_face_ind].vertices[2]) &&
 						!(current_param.start_point2 == faces[neighboring_face_ind].vertices[0] || current_param.start_point2 == faces[neighboring_face_ind].vertices[1] || current_param.start_point2 == faces[neighboring_face_ind].vertices[2]))
 					{
-						new_params.start_point1 = current_param.start_point1;
+						new_params2.face_index = neighboring_face_ind;
+						new_params2.start_point1 = current_param.start_point1;
 						for (size_t j = 0; j < 3; j++)
 							if (!(faces[current_param.face_index].vertices[j] == current_param.start_point1 || faces[current_param.face_index].vertices[j] == current_param.start_point2))
-								new_params.start_point2 = faces[current_param.face_index].vertices[j];
+								new_params2.start_point2 = faces[current_param.face_index].vertices[j];
 					}
 					else if ((current_param.start_point2 == faces[neighboring_face_ind].vertices[0] ^ current_param.start_point2 == faces[neighboring_face_ind].vertices[1] ^ current_param.start_point2 == faces[neighboring_face_ind].vertices[2]) &&
 						    !(current_param.start_point1 == faces[neighboring_face_ind].vertices[0] || current_param.start_point1 == faces[neighboring_face_ind].vertices[1] || current_param.start_point1 == faces[neighboring_face_ind].vertices[2]))
 					{
-						new_params.start_point2 = current_param.start_point2;
+						new_params1.face_index = neighboring_face_ind;
+						new_params1.start_point2 = current_param.start_point2;
 						for (size_t j = 0; j < 3; j++)
 							if (!(faces[current_param.face_index].vertices[j] == current_param.start_point1 || faces[current_param.face_index].vertices[j] == current_param.start_point2))
-								new_params.start_point1 = faces[current_param.face_index].vertices[j];
+								new_params1.start_point1 = faces[current_param.face_index].vertices[j];
 					}
 					else throw "Problem2\0";
-					stack_params.push(new_params);
 				}
+				stack_params.push(new_params1);
+				stack_params.push(new_params2);
 			}
 		}
 		return horizon_points;
