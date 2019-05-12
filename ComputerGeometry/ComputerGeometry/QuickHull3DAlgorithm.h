@@ -169,7 +169,12 @@ private:
 						horizon_points.push_back(current_param.start_point2);
 					else if (current_param.start_point2 == horizon_points.front() || current_param.start_point2 == horizon_points.back())
 						horizon_points.push_back(current_param.start_point1);
-					else throw "Problem2\0";
+					else {
+						RecursiveStackParams tmp = stack_params.top();
+						stack_params.pop();
+						stack_params.push(current_param);
+						stack_params.push(tmp);
+					}
 				}
 			}
 			else {
