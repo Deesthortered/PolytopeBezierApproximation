@@ -30,3 +30,9 @@
 *.exe
 *.out
 *.app
+
+*.ipch
+*.db
+*.idb
+*.tlog
+/ComputerGeometry/freeglut-3.0.0/*
