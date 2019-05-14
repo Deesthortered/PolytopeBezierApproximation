@@ -5,7 +5,7 @@ class BezierTriangle {
 	Point basicCenter;
 
 	GLdouble curveDegree = 0;
-	size_t resolution = 3;
+	size_t resolution = 4;
 
 public:
 	BezierTriangle(Point p1, Point p2, Point p3, Vector normal) {
@@ -45,39 +45,41 @@ private:
 		for (size_t i = 0; i < bezierNet.size(); i++)
 			bezierNet[i] = vector<Point>(resolution);
 
-		GLdouble dist12 = MyMath::pointDistance(p1, p2);
-		GLdouble dist13 = MyMath::pointDistance(p1, p3);
-		GLdouble dist23 = MyMath::pointDistance(p2, p3);
+		Vector v12 = Vector(p1, p2);
+		Vector v13 = Vector(p1, p3);
+		Vector v23 = Vector(p2, p3);
 
-		Vector vec12 = Vector(p1, p2);
-		Vector vec13 = Vector(p1, p3);
-		Vector vec23 = Vector(p2, p3);
+		GLdouble d12 = MyMath::pointDistance(p1, p2);
+		GLdouble d13 = MyMath::pointDistance(p1, p3);
+		GLdouble d23 = MyMath::pointDistance(p2, p3);
 
-		for (size_t i = 0; i < resolution; i++) {
-			bezierNet[0][i] = Point(
-				p1.x + i * vec13.x * dist13 / (resolution),
-				p1.y + i * vec13.y * dist13 / (resolution),
-				p1.z + i * vec13.z * dist13 / (resolution)
+		bezierNet[0][0] = p1;
+		bezierNet[0][resolution-1] = p2;
+		for (size_t j = 0; j < resolution; j++)
+			bezierNet[resolution-1][j] = p3;
+
+		for (size_t i = 1; i < resolution-1; i++) {
+			bezierNet[i][0] = Point(
+				p1.x + i * v13.x * d13 / (resolution - 1),
+				p1.y + i * v13.y * d13 / (resolution - 1),
+				p1.z + i * v13.z * d13 / (resolution - 1)
 				);
-			bezierNet[resolution - 1][i] = Point(
-				p2.x + i * vec23.x * dist23 / (resolution),
-				p2.y + i * vec23.y * dist23 / (resolution),
-				p2.z + i * vec23.z * dist23 / (resolution)
-				);
+			bezierNet[i][resolution-1] = Point(
+				p2.x + i * v23.x * d23 / (resolution - 1),
+				p2.y + i * v23.y * d23 / (resolution - 1),
+				p2.z + i * v23.z * d23 / (resolution - 1)
+			);
 		}
 
-		for (size_t i = 1; i < resolution - 1; i++) {
-			GLdouble curr_dist = MyMath::pointDistance(bezierNet[0][i], bezierNet[resolution - 1][i]);
-			for (size_t j = 1; j < resolution - 1; j++) {
+		for (size_t i = 0; i < resolution - 1; i++) {
+			GLdouble curr_dis = MyMath::pointDistance(bezierNet[i][0], bezierNet[i][resolution-1]) / (resolution - 1);
+			for (size_t j = 1; j < resolution - 1; j++)
 				bezierNet[i][j] = Point(
-					p1.x + i * vec13.x*dist13 + j * vec12.x*curr_dist / (resolution),
-					p1.y + i * vec13.y*dist13 + j * vec12.y*curr_dist / (resolution),
-					p1.z + i * vec13.z*dist13 + j * vec12.z*curr_dist / (resolution)
+					bezierNet[i][0].x + j * v12.x * curr_dis,
+					bezierNet[i][0].y + j * v12.y * curr_dis,
+					bezierNet[i][0].z + j * v12.z * curr_dis
 				);
-			}
 		}
-
-
 	}
 	void makeCurve() {
 
