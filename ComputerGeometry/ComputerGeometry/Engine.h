@@ -144,7 +144,6 @@ private:
 		DrawAxis();
 		DrawPoints(startPoints, color.blackColor);
 		DrawPolytop(hull);
-		DrawLines(QuickHull3DAlgorithm::horizon, color.redColor);
 
 		glutSwapBuffers();
 	}
@@ -259,8 +258,16 @@ private:
 	}
 	
 	void ReloadAll() {
-		startPoints = getStartPoints();
-		hull = QuickHull3DAlgorithm::getConvexHull(startPoints);
+		bool ok = false;
+		while (!ok) {
+			try {
+				startPoints = getStartPoints();
+				hull = QuickHull3DAlgorithm::getConvexHull(startPoints);
+				ok = true;
+			}
+			catch (int e) { e = 1; ok = false; }
+		}
+
 	}
 	vector<Point> getStartPoints() {
 		vector<Point> result = vector<Point>();

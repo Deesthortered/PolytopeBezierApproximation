@@ -3,11 +3,7 @@ using namespace std;
 
 class QuickHull3DAlgorithm {
 public:
-	static Point pivotPoint;
-	static vector<Point> horizon;
-
 	static vector<TriangleFace> getConvexHull(vector<Point> startPoints) {
-		horizon.clear();
 		if (startPoints.size() < 4) return vector<TriangleFace>();
 		TriangleFace startTriangle = getStartTrinangle(startPoints);
 		vector<TriangleFace> faces = getStartPolytop(startTriangle, startPoints);
@@ -30,10 +26,10 @@ public:
 			if (found) {
 				vector<char> used_faces = vector<char>(faces.size(), false);
 				vector<size_t> edge_faces = vector<size_t>();
-
-				horizon = getHorizonPoints(faces, used_faces, i, startPoints[ind], edge_faces);
+				vector<Point> horizon;
+				try { horizon = getHorizonPoints(faces, used_faces, i, startPoints[ind], edge_faces); }
+				catch (int e) { throw e; }
 				makeNewFaces(faces, used_faces, startPoints[ind], edge_faces, horizon);
-
 				startPoints.erase(startPoints.begin() + ind);
 				i--;
 			}
@@ -41,6 +37,7 @@ public:
 		return faces;
 	}
 private:
+	static Point pivotPoint;
 
 	static TriangleFace getStartTrinangle(vector<Point> &startPoints) {
 		size_t left = 0;
@@ -129,20 +126,29 @@ private:
 				for (size_t k = 0; k < 3; k++) {
 					if (faces[face_ind].vertices[j] == faces[faces[face_ind].neighbouringFaces[i]].vertices[k])
 						indicies.push_back(j);
+					if (indicies.size() > 2) throw 1;
 				}
-			if (indicies.size() != 2) throw "Problem4";
+			if (indicies.size() != 2) throw 2;
 			start_params[i].start_point1 = faces[face_ind].vertices[indicies[0]];
 			start_params[i].start_point2 = faces[face_ind].vertices[indicies[1]];
 		}
 
 		for (size_t i = 0; i < 3; i++) {
-			if (start_params[i].start_point2 == start_params[(i + 1) % 3].start_point2 && !(start_params[i].start_point2 == start_params[(i + 1) % 3].start_point1)) {
-				Point tmp = start_params[(i + 1) % 3].start_point2;
-				start_params[(i + 1) % 3].start_point2 = start_params[(i + 1) % 3].start_point1;
-				start_params[(i + 1) % 3].start_point1 = tmp;
+			for (size_t j = 1; j < 3; j++) {
+				if (start_params[i].start_point2 == start_params[(i + j) % 3].start_point2) {
+					if (start_params[(i + 3 - j) % 3].start_point2 == start_params[i].start_point1) {
+						Point tmp = start_params[(i + j) % 3].start_point2;
+						start_params[(i + j) % 3].start_point2 = start_params[(i + j) % 3].start_point1;
+						start_params[(i + j) % 3].start_point1 = tmp;
+					}
+					else {
+						Point tmp = start_params[i].start_point2;
+						start_params[i].start_point2 = start_params[i].start_point1;
+						start_params[i].start_point1 = tmp;
+					}
+					break;
+				}
 			}
-			else if (!(start_params[i].start_point2 == start_params[(i + 1) % 3].start_point1 && !(start_params[i].start_point2 == start_params[(i + 1) % 3].start_point2)))
-				throw "Problem5";
 		}
 
 		stack<RecursiveStackParams> stack_params;
@@ -177,7 +183,7 @@ private:
 						horizon_points.push_back(current_param.start_point2);
 					else if (current_param.start_point2 == horizon_points.front() || current_param.start_point2 == horizon_points.back())
 						horizon_points.push_back(current_param.start_point1);
-					else throw "Problem";
+					else throw 3;
 				}
 			}
 			else {
@@ -185,6 +191,8 @@ private:
 				RecursiveStackParams new_params1, new_params2;
 				new_params1.from = current_param.face_index;
 				new_params2.from = current_param.face_index;
+				bool param1_found = false;
+				bool param2_found = false;
 
 				for (size_t i = 0; i < 3; i++) {
 					size_t neighboring_face_ind = faces[current_param.face_index].neighbouringFaces[i];
@@ -195,9 +203,10 @@ private:
 						for (size_t j = 0; j < 3; j++) {
 							if (faces[neighboring_face_ind].vertices[i] == faces[current_param.face_index].vertices[j])
 								check_existance++;
+							if (check_existance > 2) throw 4;
 						}
 					}
-					if (check_existance != 2) throw "Problem1\0";
+					if (check_existance != 2) throw 5;
 
 					if ((current_param.start_point1 == faces[neighboring_face_ind].vertices[0] ^ current_param.start_point1 == faces[neighboring_face_ind].vertices[1] ^ current_param.start_point1 == faces[neighboring_face_ind].vertices[2]) &&
 						!(current_param.start_point2 == faces[neighboring_face_ind].vertices[0] || current_param.start_point2 == faces[neighboring_face_ind].vertices[1] || current_param.start_point2 == faces[neighboring_face_ind].vertices[2]))
@@ -207,6 +216,7 @@ private:
 						for (size_t j = 0; j < 3; j++)
 							if (!(faces[current_param.face_index].vertices[j] == current_param.start_point1 || faces[current_param.face_index].vertices[j] == current_param.start_point2))
 								new_params2.start_point2 = faces[current_param.face_index].vertices[j];
+						param2_found = true;
 					}
 					else if ((current_param.start_point2 == faces[neighboring_face_ind].vertices[0] ^ current_param.start_point2 == faces[neighboring_face_ind].vertices[1] ^ current_param.start_point2 == faces[neighboring_face_ind].vertices[2]) &&
 						    !(current_param.start_point1 == faces[neighboring_face_ind].vertices[0] || current_param.start_point1 == faces[neighboring_face_ind].vertices[1] || current_param.start_point1 == faces[neighboring_face_ind].vertices[2]))
@@ -216,11 +226,12 @@ private:
 						for (size_t j = 0; j < 3; j++)
 							if (!(faces[current_param.face_index].vertices[j] == current_param.start_point1 || faces[current_param.face_index].vertices[j] == current_param.start_point2))
 								new_params1.start_point1 = faces[current_param.face_index].vertices[j];
+						param1_found = true;
 					}
-					else throw "Problem2\0";
+					else throw 6;
 				}
-				stack_params.push(new_params1);
-				stack_params.push(new_params2);
+				if (param1_found) stack_params.push(new_params1);
+				if (param2_found) stack_params.push(new_params2);
 			}
 		}
 		return horizon_points;
@@ -265,4 +276,3 @@ private:
 	}
 };
 Point QuickHull3DAlgorithm::pivotPoint;
-vector<Point> QuickHull3DAlgorithm::horizon;
