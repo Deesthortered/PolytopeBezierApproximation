@@ -3,6 +3,7 @@
 #include <ctime>
 #include <vector>
 #include <stack>
+#include <algorithm>
 #include "Color.h"
 #include "MyMath.h"
 #include "Camera.h"
@@ -171,8 +172,16 @@ private:
 		}
 	}
 	void DrawPolytop(vector<TriangleFace> polytop) {
+		vector< GLfloat *> colors;
+		colors.push_back(color.blueColor);
+		colors.push_back(color.greenColor);
+		colors.push_back(color.orangeColor);
+		colors.push_back(color.redColor);
+		colors.push_back(color.blackColor);
+		colors.push_back(color.whiteColor);
+
 		for (size_t i = 0; i < polytop.size(); i++) {
-			DrawTrinagle(polytop[i], color.orangeColor, color.blackColor);
+			DrawTrinagle(polytop[i], colors[i%colors.size()], color.blackColor);
 		}
 	}
 	void DrawLines(vector<Point> lines, GLfloat *color) {
@@ -194,13 +203,13 @@ private:
 	}
 	void DrawTrinagle(TriangleFace triangle, GLfloat *colorFace, GLfloat *colorEdges) {
 		glColor3f(colorFace[0], colorFace[1], colorFace[2]);
-		/*
+		
 		glBegin(GL_TRIANGLES);
 		glVertex3d(triangle.vertices[0].x, triangle.vertices[0].y, triangle.vertices[0].z);
 		glVertex3d(triangle.vertices[1].x, triangle.vertices[1].y, triangle.vertices[1].z);
 		glVertex3d(triangle.vertices[2].x, triangle.vertices[2].y, triangle.vertices[2].z);
 		glEnd();
-		*/
+		
 		glColor3f(colorEdges[0], colorEdges[1], colorEdges[2]);
 		glBegin(GL_LINE_STRIP);
 		glVertex3d(triangle.vertices[0].x, triangle.vertices[0].y, triangle.vertices[0].z);
@@ -261,7 +270,7 @@ private:
 		result.push_back(Point(25, 10, 50));
 		result.push_back(Point(25, 50, 25));
 
-		for (int i = 0; i < 1; i++) {
+		for (int i = 0; i < 80; i++) {
 			result.push_back(
 				Point(
 					rand() % (GLint)startPointBorder.x,
@@ -270,7 +279,6 @@ private:
 					)
 			);
 		}
-		
 		return result;
 	}
 };

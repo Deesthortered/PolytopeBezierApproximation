@@ -7,14 +7,14 @@ public:
 	static vector<Point> horizon;
 
 	static vector<TriangleFace> getConvexHull(vector<Point> startPoints) {
+		horizon.clear();
 		if (startPoints.size() < 4) return vector<TriangleFace>();
 		TriangleFace startTriangle = getStartTrinangle(startPoints);
 		vector<TriangleFace> faces = getStartPolytop(startTriangle, startPoints);
 
-		if (startPoints.empty()) 
-			return faces;
 		for (size_t i = 0; i < faces.size(); i++) {
-			GLdouble distance = MyMath::trianglePointDistance(faces[i], startPoints[0]);
+			if (startPoints.empty()) break;
+			GLdouble distance = 0;
 			size_t ind = 0;
 			bool found = false;
 			for (size_t j = 0; j < startPoints.size(); j++) {
@@ -22,19 +22,22 @@ public:
 					found = true;
 					GLdouble current_distance = MyMath::trianglePointDistance(faces[i], startPoints[j]);
 					if (current_distance > distance) {
-						ind = i;
+						ind = j;
 						distance = current_distance;
 					}
 				}
 			}
 			if (found) {
-				vector<char> used = vector<char>(faces.size(), false);
-				horizon = GetHorizonPoints(faces, used, i, startPoints, ind);
+				vector<char> used_faces = vector<char>(faces.size(), false);
+				vector<size_t> edge_faces = vector<size_t>();
+
+				horizon = getHorizonPoints(faces, used_faces, i, startPoints[ind], edge_faces);
+				makeNewFaces(faces, used_faces, startPoints[ind], edge_faces, horizon);
+
+				startPoints.erase(startPoints.begin() + ind);
 				i--;
-				break;
 			}
 		}
-
 		return faces;
 	}
 private:
@@ -78,7 +81,6 @@ private:
 			}
 		}
 
-		// Possible mistake
 		startPolytop.push_back(TriangleFace(startTriangle.vertices[0], startTriangle.vertices[1], startPoints[ind], 0, 2, 3));
 		startPolytop.push_back(TriangleFace(startTriangle.vertices[1], startTriangle.vertices[2], startPoints[ind], 0, 3, 1));
 		startPolytop.push_back(TriangleFace(startTriangle.vertices[2], startTriangle.vertices[0], startPoints[ind], 0, 1, 2));
@@ -107,14 +109,19 @@ private:
 
 		return startPolytop;
 	}
-	static vector<Point> GetHorizonPoints(vector<TriangleFace> &faces, vector<char> &used, size_t face_ind, vector<Point> &startPoints, size_t point_ind) {
-		used[face_ind] = true;
+
+	static vector<Point> getHorizonPoints(vector<TriangleFace> &faces, vector<char> &used_faces, size_t face_ind, Point found_point, vector<size_t> &edge_faces) {
+		used_faces[face_ind] = true;
 
 		vector<RecursiveStackParams> start_params = vector<RecursiveStackParams>(3);
 
 		start_params[0].face_index = faces[face_ind].neighbouringFaces[0];
 		start_params[1].face_index = faces[face_ind].neighbouringFaces[1];
 		start_params[2].face_index = faces[face_ind].neighbouringFaces[2];
+
+		start_params[0].from = face_ind;
+		start_params[1].from = face_ind;
+		start_params[2].from = face_ind;
 
 		for (size_t i = 0; i < 3; i++) {
 			vector<size_t> indicies;
@@ -157,8 +164,9 @@ private:
 			RecursiveStackParams current_param = stack_params.top();
 			stack_params.pop();
 
-			bool inside = MyMath::trianglePointCrossInside(faces[current_param.face_index], pivotPoint, startPoints[point_ind]);
+			bool inside = MyMath::trianglePointCrossInside(faces[current_param.face_index], pivotPoint, found_point);
 			if (inside) {
+				edge_faces.push_back(current_param.face_index);
 				if (first) {
 					first = false;
 					horizon_points.push_back(current_param.start_point1);
@@ -173,12 +181,14 @@ private:
 				}
 			}
 			else {
-				used[current_param.face_index] = true;
+				used_faces[current_param.face_index] = true;
 				RecursiveStackParams new_params1, new_params2;
+				new_params1.from = current_param.face_index;
+				new_params2.from = current_param.face_index;
 
 				for (size_t i = 0; i < 3; i++) {
 					size_t neighboring_face_ind = faces[current_param.face_index].neighbouringFaces[i];
-					if (used[neighboring_face_ind]) continue;
+					if (used_faces[neighboring_face_ind]) continue;
 
 					int check_existance = 0;
 					for (size_t i = 0; i < 3; i++) {
@@ -215,12 +225,44 @@ private:
 		}
 		return horizon_points;
 	}
-
 	struct RecursiveStackParams {
 		size_t face_index;
 		Point start_point1;
 		Point start_point2;
+		size_t from;
 	};
+
+	static void makeNewFaces(vector<TriangleFace> &faces, vector<char> &used_faces, Point found_point, vector<size_t> &edge_faces, vector<Point> &horizon) {
+		size_t previous_size = faces.size();
+		for (size_t i = 0; i < edge_faces.size(); i++)
+			used_faces.push_back(false);
+		for (size_t i = 0; i < edge_faces.size(); i++) {
+			TriangleFace face = TriangleFace(horizon[i], horizon[i + 1], found_point, edge_faces[i], previous_size + ((i+1) % edge_faces.size()), previous_size + (i == 0 ? edge_faces.size()-1 : i-1));
+			faces.push_back(face);
+
+			for (size_t j = 0; j < 3; j++)
+				if (used_faces[faces[edge_faces[i]].neighbouringFaces[j]]) {
+					faces[edge_faces[i]].neighbouringFaces[j] = faces.size() - 1;
+					break;
+				}
+		}
+
+		vector<size_t> less_face_indicies;
+		for (size_t i = 0; i < used_faces.size(); i++) {
+			if (!used_faces[i]) continue;
+			less_face_indicies.push_back(i);
+		}
+		sort(less_face_indicies.begin(), less_face_indicies.end(), greater<size_t>());
+
+		for (size_t i = 0; i < less_face_indicies.size(); i++) {
+			faces.erase(faces.begin() + less_face_indicies[i]);
+			for (size_t j = 0; j < faces.size(); j++)
+				for (size_t k = 0; k < 3; k++) {
+					if (faces[j].neighbouringFaces[k] >= (GLint)less_face_indicies[i])
+						faces[j].neighbouringFaces[k]--;
+				}
+		}
+	}
 };
 Point QuickHull3DAlgorithm::pivotPoint;
 vector<Point> QuickHull3DAlgorithm::horizon;
