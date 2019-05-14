@@ -2,7 +2,6 @@ class BezierTriangle {
 	Point p1, p2, p3;
 	vector<vector<Point>> bezierNet;
 	Vector normal;
-	Point basicCenter;
 
 	GLdouble curveDegree = 0;
 	size_t resolution = 4;
@@ -16,8 +15,6 @@ public:
 
 		makeNet();
 		makeCurve();
-
-		basicCenter = bezierNet[bezierNet.size()/2][bezierNet.size() / 2];
 	}
 	void setCurveDegree(GLdouble val) {
 		curveDegree = val;
@@ -31,6 +28,7 @@ public:
 		return bezierNet;
 	}
 	Point getComparePoint() {
+		Point basicCenter = bezierNet[resolution / 2][resolution / 2];
 		return Point(basicCenter.x + normal.x, basicCenter.y + normal.y, basicCenter.z + normal.z);
 	}
 	void inverseNormal() {
@@ -82,7 +80,17 @@ private:
 		}
 	}
 	void makeCurve() {
+		makeNet();
 
+		for (size_t i = 1; i < resolution - 1; i++)
+			for (size_t j = 1; j < resolution - 1; j++) {
+				double delta = curveDegree * sin(3.14 / ((resolution - j) + abs((double)resolution * 2 / 3 - i)));
+				bezierNet[i][j] = Point(
+					bezierNet[i][j].x + delta * normal.x,
+					bezierNet[i][j].y + delta * normal.y,
+					bezierNet[i][j].z + delta * normal.z
+					);
+			}
 	}
 };
 

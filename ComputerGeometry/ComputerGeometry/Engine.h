@@ -18,8 +18,8 @@ class Engine {
 	GLint spaceDepth;
 	Color color;
 
-	Point startPointBorder = Point(50, 50, 50);
-	GLint pointCount = 0;
+	Point startPointBorder = Point(100, 100, 100);
+	GLint pointCount = 40;
 
 	vector<Point> startPoints;
 	vector<TriangleFace> hull;
@@ -99,12 +99,12 @@ public:
 		}
 
 		else if (key == '*') {
-			curveDegree += 0.1;
+			curveDegree += 0.5;
 			for (size_t i = 0; i < bezierTriangles.size(); i++)
 				bezierTriangles[i].setCurveDegree(curveDegree);
 		}
 		else if (key == '/') {
-			curveDegree -= 0.1;
+			curveDegree -= 0.5;
 			for (size_t i = 0; i < bezierTriangles.size(); i++)
 				bezierTriangles[i].setCurveDegree(curveDegree);
 		}
@@ -176,7 +176,7 @@ private:
 		camera.ReshapeCamera(spaceWidth, spaceHeight);
 
 		DrawAxis();
-		//DrawPoints(startPoints, color.blackColor);
+		DrawPoints(startPoints, color.blackColor);
 
 		for (size_t i = 0; i < bezierTriangles.size(); i++) {
 			DrawSurfaceLines(BezierSurfaceAlgorithm::getBezierSurface(bezierTriangles[i].getBezierNet()), color.orangeColor);
