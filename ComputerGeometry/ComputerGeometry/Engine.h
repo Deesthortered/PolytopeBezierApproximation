@@ -19,12 +19,13 @@ class Engine {
 	Color color;
 
 	Point startPointBorder = Point(50, 50, 50);
-	GLint pointCount = 100;
+	GLint pointCount = 0;
 
 	vector<Point> startPoints;
 	vector<TriangleFace> hull;
 	vector<BezierTriangle> bezierTriangles;
 	GLdouble curveDegree = 0;
+	size_t curveResolution = 3;
 
 public:
 	Camera camera = Camera();
@@ -107,6 +108,17 @@ public:
 			for (size_t i = 0; i < bezierTriangles.size(); i++)
 				bezierTriangles[i].setCurveDegree(curveDegree);
 		}
+
+		else if (key == '0') {
+			curveResolution += 1;
+			for (size_t i = 0; i < bezierTriangles.size(); i++)
+				bezierTriangles[i].setResolution(curveResolution);
+		}
+		else if (key == '9') {
+			curveResolution -= 1;
+			for (size_t i = 0; i < bezierTriangles.size(); i++)
+				bezierTriangles[i].setResolution(curveResolution);
+		}
 	}
 	void handleSpecialKeys(int key) {
 		switch (key) {
@@ -164,7 +176,7 @@ private:
 		camera.ReshapeCamera(spaceWidth, spaceHeight);
 
 		DrawAxis();
-		DrawPoints(startPoints, color.blackColor);
+		//DrawPoints(startPoints, color.blackColor);
 
 		for (size_t i = 0; i < bezierTriangles.size(); i++) {
 			DrawSurfaceLines(BezierSurfaceAlgorithm::getBezierSurface(bezierTriangles[i].getBezierNet()), color.orangeColor);

@@ -20,6 +20,7 @@ public:
 		x = p2.x - p1.x;
 		y = p2.y - p1.y;
 		z = p2.z - p1.z;
+		Normalize();
 	}
 	void Normalize() {
 		GLdouble len = pow(x*x + y * y + z * z, 0.5);
@@ -74,6 +75,9 @@ class MyMath
 public:
 	template <typename T> static GLint sgn(T val) {
 		return (T(0) < val) - (val < T(0));
+	}
+	static GLdouble pointDistance(Point p1, Point p2) {
+		return pow(((p1.x - p2.x)*(p1.x - p2.x) + (p1.y - p2.y)*(p1.y - p2.y) + (p1.z - p2.z)*(p1.z - p2.z)), 0.5);
 	}
 
 	static Vector vectorPlus(Vector vec1, Vector vec2) {
