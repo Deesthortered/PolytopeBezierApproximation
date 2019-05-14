@@ -121,6 +121,7 @@
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="BezierPolytopeApproximator.h" />
     <ClInclude Include="BezierSurfaceAlgorithm.h" />
     <ClInclude Include="Camera.h" />
     <ClInclude Include="Color.h" />

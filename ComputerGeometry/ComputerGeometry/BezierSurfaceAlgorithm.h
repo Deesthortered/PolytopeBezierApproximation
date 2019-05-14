@@ -8,18 +8,9 @@ class BezierSurfaceAlgorithm {
 public:
 	static GLint surfaceResolution;
 
-	static vector<Point> getBezierSurface(vector<Point> &pivotPoints) {
-		if (pivotPoints.empty()) return vector<Point>();
-		size_t len = pow(pivotPoints.size(), 0.5);
-
-		vector<vector<Point>> lines = vector<vector<Point>>();
-		size_t ind = 0;
-		for (size_t i = 0; i < len; i++) {
-			vector<Point> tmp = vector<Point>();
-			for (size_t j = 0; j < len; j++)
-				tmp.push_back(pivotPoints[ind++]);
-			lines.push_back(tmp);
-		}
+	static vector<Point> getBezierSurface(vector<vector<Point>> lines) {
+		if (lines.empty()) return vector<Point>();
+		size_t len = lines.size();
 
 		vector<vector<Point>> resultLines = vector<vector<Point>>(len);
 		for (int i = 0; i < surfaceResolution + 1; i++) {

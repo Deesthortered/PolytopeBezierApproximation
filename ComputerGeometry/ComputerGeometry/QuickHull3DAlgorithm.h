@@ -3,6 +3,8 @@ using namespace std;
 
 class QuickHull3DAlgorithm {
 public:
+	static Point pivotPoint;
+
 	static vector<TriangleFace> getConvexHull(vector<Point> startPoints) {
 		if (startPoints.size() < 4) return vector<TriangleFace>();
 		TriangleFace startTriangle = getStartTrinangle(startPoints);
@@ -37,7 +39,6 @@ public:
 		return faces;
 	}
 private:
-	static Point pivotPoint;
 
 	static TriangleFace getStartTrinangle(vector<Point> &startPoints) {
 		size_t left = 0;

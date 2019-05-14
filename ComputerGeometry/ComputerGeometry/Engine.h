@@ -9,6 +9,7 @@
 #include "Camera.h"
 #include "QuickHull3DAlgorithm.h"
 #include "BezierSurfaceAlgorithm.h"
+#include "BezierPolytopeApproximator.h"
 using namespace std;
 
 class Engine {
@@ -18,9 +19,12 @@ class Engine {
 	Color color;
 
 	Point startPointBorder = Point(50, 50, 50);
-	GLint pointCount = 50;
+	GLint pointCount = 100;
+
 	vector<Point> startPoints;
 	vector<TriangleFace> hull;
+	vector<BezierTriangle> bezierTriangles;
+	GLdouble curveDegree = 0;
 
 public:
 	Camera camera = Camera();
@@ -85,6 +89,24 @@ public:
 		else if (key == 'R' || key == 'r') {
 			ReloadAll();
 		}
+
+		else if (key == '+') {
+			BezierSurfaceAlgorithm::surfaceResolution++;
+		}
+		else if (key == '-') {
+			BezierSurfaceAlgorithm::surfaceResolution--;
+		}
+
+		else if (key == '*') {
+			curveDegree += 0.1;
+			for (size_t i = 0; i < bezierTriangles.size(); i++)
+				bezierTriangles[i].setCurveDegree(curveDegree);
+		}
+		else if (key == '/') {
+			curveDegree -= 0.1;
+			for (size_t i = 0; i < bezierTriangles.size(); i++)
+				bezierTriangles[i].setCurveDegree(curveDegree);
+		}
 	}
 	void handleSpecialKeys(int key) {
 		switch (key) {
@@ -143,7 +165,10 @@ private:
 
 		DrawAxis();
 		DrawPoints(startPoints, color.blackColor);
-		DrawPolytop(hull);
+
+		for (size_t i = 0; i < bezierTriangles.size(); i++) {
+			DrawSurfaceLines(BezierSurfaceAlgorithm::getBezierSurface(bezierTriangles[i].getBezierNet()), color.orangeColor);
+		}
 
 		glutSwapBuffers();
 	}
@@ -217,7 +242,7 @@ private:
 		glVertex3d(triangle.vertices[0].x, triangle.vertices[0].y, triangle.vertices[0].z);
 		glEnd();
 	}
-	void DrawSurfaceLines(vector<Point> &points, GLfloat *color) {
+	void DrawSurfaceLines(vector<Point> points, GLfloat *color) {
 		if (points.empty()) return;
 		size_t len = pow(points.size(), 0.5);
 		glBegin(GL_LINES);
@@ -267,7 +292,7 @@ private:
 			}
 			catch (int e) { e = 1; ok = false; }
 		}
-
+		bezierTriangles = BezierPolytopeApproximator::getBezierTriangles(hull);
 	}
 	vector<Point> getStartPoints() {
 		vector<Point> result = vector<Point>();
@@ -277,7 +302,7 @@ private:
 		result.push_back(Point(25, 10, 50));
 		result.push_back(Point(25, 50, 25));
 
-		for (int i = 0; i < 80; i++) {
+		for (int i = 0; i < pointCount; i++) {
 			result.push_back(
 				Point(
 					rand() % (GLint)startPointBorder.x,
