@@ -84,7 +84,7 @@ private:
 
 		for (size_t i = 1; i < resolution - 1; i++)
 			for (size_t j = 1; j < resolution - 1; j++) {
-				double delta = curveDegree * sin(3.14 / ((resolution - j) + abs((double)resolution * 2 / 3 - i)));
+				double delta = curveDegree * sin(3.14 / (resolution - abs((double)(resolution)/2 - j) + resolution - (abs((double)resolution * 2 / 3 - i))));
 				bezierNet[i][j] = Point(
 					bezierNet[i][j].x + delta * normal.x,
 					bezierNet[i][j].y + delta * normal.y,

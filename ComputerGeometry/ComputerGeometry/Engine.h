@@ -13,13 +13,13 @@
 using namespace std;
 
 class Engine {
-	GLint spaceWidth;
-	GLint spaceHeight;
-	GLint spaceDepth;
+	static GLint spaceWidth;
+	static GLint spaceHeight;
+	static GLint spaceDepth;
 	Color color;
 
+	static const GLint pointCount = 40;
 	Point startPointBorder = Point(100, 100, 100);
-	GLint pointCount = 40;
 
 	vector<Point> startPoints;
 	vector<TriangleFace> hull;
@@ -171,6 +171,30 @@ public:
 	}
 
 private:
+	void ReloadAll() {
+		hull = launch(getStartPoints, QuickHull3DAlgorithm::getConvexHull);
+		bezierTriangles = BezierPolytopeApproximator::getBezierTriangles(hull);
+	}
+	static vector<Point> getStartPoints(Point startPointBorder) {
+		vector<Point> result = vector<Point>();
+
+		result.push_back(Point(10, 10, 10));
+		result.push_back(Point(50, 10, 10));
+		result.push_back(Point(25, 10, 50));
+		result.push_back(Point(25, 50, 25));
+
+		for (int i = 0; i < pointCount; i++) {
+			result.push_back(
+				Point(
+					rand() % (GLint)startPointBorder.x,
+					rand() % (GLint)startPointBorder.y,
+					rand() % (GLint)startPointBorder.z
+				)
+			);
+		}
+		return result;
+	}
+
 	void DrawAll() {
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		camera.ReshapeCamera(spaceWidth, spaceHeight);
@@ -294,35 +318,19 @@ private:
 		glEnd();
 	}
 	
-	void ReloadAll() {
-		bool ok = false;
-		while (!ok) {
+	vector<TriangleFace> launch(vector<Point> (*f1)(Point), vector<TriangleFace> (*f2)(vector<Point>) ) {
+		while (1) {
 			try {
-				startPoints = getStartPoints();
-				hull = QuickHull3DAlgorithm::getConvexHull(startPoints);
-				ok = true;
+				startPoints = f1(startPointBorder);
+				hull = f2(startPoints);
+				return hull;
 			}
-			catch (int e) { e = 1; ok = false; }
+			catch (int e) { e = 1; continue; }
+			break;
 		}
-		bezierTriangles = BezierPolytopeApproximator::getBezierTriangles(hull);
-	}
-	vector<Point> getStartPoints() {
-		vector<Point> result = vector<Point>();
-		
-		result.push_back(Point(10, 10, 10));
-		result.push_back(Point(50, 10, 10));
-		result.push_back(Point(25, 10, 50));
-		result.push_back(Point(25, 50, 25));
-
-		for (int i = 0; i < pointCount; i++) {
-			result.push_back(
-				Point(
-					rand() % (GLint)startPointBorder.x,
-					rand() % (GLint)startPointBorder.y,
-					rand() % (GLint)startPointBorder.z
-					)
-			);
-		}
-		return result;
 	}
 };
+
+GLint Engine::spaceWidth;
+GLint Engine::spaceHeight;
+GLint Engine::spaceDepth;
